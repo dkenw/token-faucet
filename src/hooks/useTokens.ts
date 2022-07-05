@@ -1,6 +1,6 @@
 import { fetchJson } from 'ethers/lib/utils'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNetwork } from 'wagmi'
+import { useChainId } from './useChainId'
 
 export interface TokenData {
   chainId: number
@@ -35,12 +35,11 @@ export const useTokens = (tokenListUrl: string | undefined): TokenData[] | undef
       })
   }, [tokenListUrl])
 
-  const { chain } = useNetwork()
+  const chainId = useChainId()
 
   return useMemo(() => {
     if (!tokens) return undefined
-    if (!chain?.id) return undefined
-
-    return tokens.filter((token) => token.chainId === chain.id)
-  }, [tokens, chain?.id])
+    if (!chainId) return undefined
+    return tokens.filter((token) => token.chainId === chainId)
+  }, [tokens, chainId])
 }

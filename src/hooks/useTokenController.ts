@@ -1,6 +1,6 @@
 import { BigNumber, Contract } from 'ethers'
 import { useEffect, useState } from 'react'
-import { useContract, useContractWrite, useSigner, useWaitForTransaction } from 'wagmi'
+import { useAccount, useContract, useContractWrite, useSigner, useWaitForTransaction } from 'wagmi'
 import { TokenData } from './useTokens'
 
 const ABI = [
@@ -55,8 +55,10 @@ export const useTokenController = (token: TokenData | undefined, mintAmount: num
     hash: mint.data?.hash,
   })
 
+  const { address } = useAccount()
+
   return {
-    canMint: canMint && token?.symbol !== 'WETH',
+    canMint: canMint && token?.symbol !== 'WETH' && address != null,
     mint,
     mintTransaction,
   }

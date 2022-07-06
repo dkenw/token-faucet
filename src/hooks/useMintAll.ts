@@ -1,7 +1,7 @@
 import { BigNumber, Contract } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 import { useEffect, useMemo, useState } from 'react'
-import { useContractWrite, useSigner, useWaitForTransaction } from 'wagmi'
+import { useAccount, useContractWrite, useSigner, useWaitForTransaction } from 'wagmi'
 import { TokenData } from './useTokens'
 
 const MAKERDAO_MULTICALL2_ADDRESS = '0x5ba1e12693dc8f9c48aad8770482f4739beed696'
@@ -12,15 +12,16 @@ const MULTICALL2_ABI = [
   'function tryAggregate(bool requireSuccess, tuple(address target, bytes callData)[] calls) returns (tuple(bool success, bytes returnData)[] returnData)',
 ]
 
-const TOKEN_INTERFACE = new Interface(['function mint(uint256 amount)'])
+const TOKEN_INTERFACE = new Interface(['function mintTo(address to, uint256 amount)'])
 
 const useCanMint = (tokens: TokenData[] | undefined, mintAmount: number) => {
   const { data: _signer, isFetching: signerFetching } = useSigner()
   const signer = _signer || undefined
+  const { address } = useAccount()
   const [canMint, setCanMint] = useState<Record<string, boolean> | undefined>(undefined)
 
   useEffect(() => {
-    if (signerFetching || !signer) return
+    if (signerFetching || !signer || !address) return
     if (!tokens) return
 
     setCanMint(undefined)
@@ -31,7 +32,7 @@ const useCanMint = (tokens: TokenData[] | undefined, mintAmount: number) => {
       }
       const contract = new Contract(token.address, TOKEN_INTERFACE, signer)
       return contract.estimateGas
-        .mint(mintAmount)
+        .mintTo(address, mintAmount)
         .then(() => true)
         .catch(() => false)
         .then((result) => ({ [token.address]: result }))
@@ -41,7 +42,7 @@ const useCanMint = (tokens: TokenData[] | undefined, mintAmount: number) => {
       const results = (await Promise.all(promises)).reduce((acc, cur) => ({ ...acc, ...cur }), {})
       setCanMint(results) // race condition does happened
     })()
-  }, [signer, tokens, mintAmount, signerFetching])
+  }, [signer, tokens, mintAmount, signerFetching, address])
 
   return signer && tokens ? canMint : undefined
 }
@@ -50,19 +51,22 @@ export const useMintAll = (tokens: TokenData[] | undefined, mintAmount: number =
   // disable mintAll when there're more than 20 tokens
   const canMint = useCanMint(tokens && tokens.length > 20 ? undefined : tokens, mintAmount)
 
+  const { address } = useAccount()
+
   const calls = useMemo(() => {
     if (!tokens) return undefined
     if (!canMint) return undefined
+    if (!address) return undefined
 
     return tokens
       .filter((token) => canMint[token.address])
       .map((token) => {
         const target = token.address
         const rawAmount = BigNumber.from(10).pow(token.decimals).mul(mintAmount)
-        const callData = TOKEN_INTERFACE.encodeFunctionData('mint', [rawAmount])
+        const callData = TOKEN_INTERFACE.encodeFunctionData('mintTo', [address, rawAmount])
         return { target, callData }
       })
-  }, [tokens, mintAmount, canMint])
+  }, [tokens, mintAmount, canMint, address])
 
   const mintAll = useContractWrite({
     addressOrName: MAKERDAO_MULTICALL2_ADDRESS,

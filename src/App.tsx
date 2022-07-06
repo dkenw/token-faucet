@@ -10,7 +10,7 @@ import { TokenData, useTokens } from './hooks/useTokens'
 
 const DEFAULT_TOKEN_LIST_URL = 'https://raw.githubusercontent.com/dkenw/token-list/master/tokenlist.json'
 
-const MINT_AMOUNT = 100
+const MINT_AMOUNT = 1000
 
 const TokenRow = memo(function TokenRow({ token }: { token: TokenData }) {
   const { canMint, mint, mintTransaction } = useTokenController(token, MINT_AMOUNT)

@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAccount, useContractWrite, useSigner, useWaitForTransaction } from 'wagmi'
 import { TokenData } from './useTokens'
 
-const MAKERDAO_MULTICALL2_ADDRESS = '0x5ba1e12693dc8f9c48aad8770482f4739beed696'
+const MAKERDAO_MULTICALL2_ADDRESS = '0x8250eba230eD7fCB90414219faeE89ce85162231'
+// '0x5ba1e12693dc8f9c48aad8770482f4739beed696'
 
 const MULTICALL2_ABI = [
   // struct Call { address target; bytes callData; }

@@ -1,20 +1,25 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { memo } from 'react'
+import { useAccount } from 'wagmi'
 import './App.css'
 import { Column, Row } from './components/layout'
 import { LoadingSpinner } from './components/LoadingSpinner'
+import { TokenData } from './hooks/tokens'
+import { useChainId } from './hooks/useChainId'
 import { useInputField } from './hooks/useInputField'
-import { useMintAll } from './hooks/useMintAll'
-import { useTokenController } from './hooks/useTokenController'
-import { TokenData, useTokens } from './hooks/useTokens'
+import { useMint, useMintAll } from './hooks/useMint'
+
+import { useTokens } from './hooks/useTokens'
 
 const DEFAULT_TOKEN_LIST_URL = 'https://raw.githubusercontent.com/dkenw/token-list/master/tokenlist.json'
 
-const MINT_AMOUNT = 1000
+// const MINT_AMOUNT = 1000
 
 const TokenRow = memo(function TokenRow({ token }: { token: TokenData }) {
-  const { canMint, mint, mintTransaction } = useTokenController(token, MINT_AMOUNT)
+  const { mint, mintAmount, enabled: mintEnabled, transaction: mintTransaction } = useMint(token)
   const isMintLoading = mint.isLoading || mintTransaction.isLoading
+
+  const { address } = useAccount()
 
   return (
     <tr>
@@ -25,14 +30,21 @@ const TokenRow = memo(function TokenRow({ token }: { token: TokenData }) {
       <td>{token.name}</td>
       <td className="text-sm">{token.address}</td>
       <td>
-        <Row gap="0.8em" style={{ visibility: canMint ? undefined : 'hidden' }}>
+        <Row
+          gap="0.8em"
+          style={{
+            visibility: mintEnabled ? undefined : 'hidden',
+            pointerEvents: address ? undefined : 'none',
+            opacity: address ? undefined : 0.25,
+          }}
+        >
           <button
-            className="rounded-md h-7 w-24 bg-neutral-700 hover:bg-neutral-800 disabled:opacity-90 text-white text-sm font-semibold"
+            className="rounded-md h-7 min-w-max w-24 bg-neutral-700 px-2 hover:bg-neutral-800 disabled:opacity-90 text-white text-xs font-semibold"
             onClick={() => mint.write()}
             disabled={isMintLoading}
           >
             <Row gap="0.5em" justifyCenter>
-              {isMintLoading ? <LoadingSpinner /> : <>Mint {MINT_AMOUNT}</>}
+              {isMintLoading ? <LoadingSpinner /> : <>Mint {mintAmount}</>}
             </Row>
           </button>
           <div className="font-semibold w-1">{mintTransaction.isSuccess ? '✓' : null}</div>
@@ -43,11 +55,18 @@ const TokenRow = memo(function TokenRow({ token }: { token: TokenData }) {
 })
 
 export default function App() {
-  const [tokenListUrl, handleTokenListUrlChange] = useInputField(DEFAULT_TOKEN_LIST_URL, 500)
-  const tokens = useTokens(tokenListUrl)
+  const chainId = useChainId()
 
-  const mintAll = useMintAll(tokens, MINT_AMOUNT)
-  const isMintAllLoading = mintAll.mintAll.isLoading || mintAll.mintAllTransaction.isLoading
+  const [tokenListUrl, handleTokenListUrlChange] = useInputField(DEFAULT_TOKEN_LIST_URL, 500)
+  const { tokensByChainId, data: listData } = useTokens(tokenListUrl)
+  const tokens = chainId ? tokensByChainId?.[chainId] : undefined
+
+  const mintAll = useMintAll(tokens)
+  const isMintAllLoading = mintAll.mintAll.isLoading || mintAll.transaction.isLoading
+
+  const { address } = useAccount()
+
+  console.log(mintAll.enabled, mintAll)
 
   return (
     <Column stretch gap="24px" style={{ maxWidth: 1000 }} className="mx-auto my-16 px-8">
@@ -65,6 +84,27 @@ export default function App() {
         placeholder="Enter a token list's URL"
       />
 
+      {listData && (
+        <Row gap="1em">
+          <img
+            src={listData?.logoURI ?? ''}
+            className="w-14 h-14"
+            alt={listData.name}
+            style={{ border: '1px solid #eee', borderRadius: 6 }}
+          />
+          <Column gap="">
+            <h2 className="font-bold">{listData.name}</h2>
+            <div className="text-sm">{tokens?.length ?? 0} tokens in the current network</div>
+          </Column>
+        </Row>
+      )}
+
+      {/* <h3 className="font-bold">Rinkeby</h3> */}
+
+      {/* <div>
+        Total {allTokens?.length} tokens in the list. {tokens?.length} tokens in this network.
+      </div> */}
+
       {tokens && (
         <table className="table-auto">
           <thead>
@@ -74,9 +114,16 @@ export default function App() {
               <th>Name</th>
               <th>Address</th>
               <th>
-                <Row gap="0.8em" style={{ visibility: mintAll.canMintAll ? undefined : 'hidden' }}>
+                <Row
+                  gap="0.8em"
+                  style={{
+                    visibility: mintAll.enabled ? undefined : undefined, // 'hidden',
+                    pointerEvents: address ? undefined : 'none',
+                    opacity: address ? undefined : 0.25,
+                  }}
+                >
                   <button
-                    className="rounded-md h-7 w-24 bg-neutral-700 hover:bg-neutral-800 disabled:opacity-90 text-white text-sm font-semibold"
+                    className="rounded-md h-7 min-w-max w-24 px-2 bg-neutral-700 hover:bg-neutral-800 disabled:opacity-90 text-white text-sm font-semibold"
                     onClick={() => mintAll.mintAll.write()}
                     disabled={isMintAllLoading}
                   >
@@ -84,7 +131,7 @@ export default function App() {
                       {isMintAllLoading ? <LoadingSpinner /> : <>Mint all</>}
                     </Row>
                   </button>
-                  <div className="font-semibold w-1">{mintAll.mintAllTransaction.isSuccess ? '✓' : null}</div>
+                  <div className="font-semibold w-1">{mintAll.transaction.isSuccess ? '✓' : null}</div>
                 </Row>
               </th>
             </tr>

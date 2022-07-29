@@ -26,8 +26,6 @@ export const useMintAll = (
   const currentChainId = useChainId()
   const chainId = overrideChainId ?? currentChainId
 
-  console.log('chainId', chainId)
-
   const mintableTokens = useMemo(
     () => tokens?.filter((token) => token.chainId === chainId).filter(isMintable),
     [tokens, chainId]

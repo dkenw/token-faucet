@@ -13,7 +13,18 @@ import reportWebVitals from './reportWebVitals'
 /**
  * Prepare fallback public providers if no metamask is found
  */
-const { chains: defaultChains, provider } = configureChains([chain.rinkeby, chain.mainnet], [publicProvider()])
+const { chains: defaultChains, provider } = configureChains(
+  [
+    chain.rinkeby,
+    chain.ropsten,
+    chain.goerli,
+    chain.kovan,
+    chain.optimismKovan,
+    chain.polygonMumbai,
+    chain.arbitrumRinkeby,
+  ],
+  [publicProvider()]
+)
 
 /**
  * Prepare connectors via rainbowkit

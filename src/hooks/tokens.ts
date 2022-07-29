@@ -35,9 +35,9 @@ export const getMintAmount = (token: MintableTokenData, overrideMintAmountFloat:
     : BigNumber.from(token.extensions?.mintable?.default as string)
 }
 
-export const MINTABLE_TOKEN_ABI = [
-  'function mint(uint256 amount)', //
-  'function mintTo(address to, uint256 amount)',
-]
+/**
+ * TODO: support `mint`?
+ */
+export const MINTABLE_TOKEN_ABI = ['function mintTo(address to, uint256 amount)']
 
 export const MINTABLE_TOKEN_INTERFACE = new Interface(MINTABLE_TOKEN_ABI)

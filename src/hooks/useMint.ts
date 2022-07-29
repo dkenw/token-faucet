@@ -22,7 +22,7 @@ export const useMintAll = (
   overrideMintAmountFloat?: number | undefined,
   overrideChainId?: number | undefined
 ) => {
-  const { address } = useAccount()
+  const { isConnected, address } = useAccount()
   const currentChainId = useChainId()
   const chainId = overrideChainId ?? currentChainId
 
@@ -45,18 +45,15 @@ export const useMintAll = (
     })
   }, [mintableTokens, overrideMintAmountFloat, address])
 
-  const enabled = Boolean(address) && calls != null && calls.length > 0
-
   const { controller, txReceipt } = useContractWriteAndGetTransaction({
     chainId,
-    addressOrName: enabled ? MAKERDAO_MULTICALL2_ADDRESS : '',
+    addressOrName: isConnected ? MAKERDAO_MULTICALL2_ADDRESS : '',
     contractInterface: MULTICALL2_ABI,
     functionName: 'tryAggregate',
-    args: [false, calls],
+    args: [false, calls ?? []],
   })
 
   return {
-    enabled,
     controller,
     txReceipt,
     mintableCount: mintableTokens?.length ?? 0,
@@ -64,26 +61,28 @@ export const useMintAll = (
 }
 
 export const useMint = (token: TokenData | undefined, overrideMintAmountFloat?: number | undefined) => {
-  const enabled = isMintable(token)
-  const rawAmount = enabled ? getMintAmount(token, overrideMintAmountFloat) : BigNumber.from('0')
+  const mintable = isMintable(token)
+  const rawAmount = mintable ? getMintAmount(token, overrideMintAmountFloat) : BigNumber.from('0')
+
+  const { isConnected, address } = useAccount()
 
   const { controller, txReceipt } = useContractWriteAndGetTransaction({
     chainId: token?.chainId,
-    addressOrName: token?.address ?? '',
+    addressOrName: isConnected ? token?.address ?? '' : '',
     contractInterface: MINTABLE_TOKEN_ABI,
-    functionName: 'mint',
-    args: [rawAmount],
+    functionName: 'mintTo',
+    args: [address, rawAmount],
   })
 
   const mintAmountReadable =
-    token && enabled
+    token && mintable
       ? (+(+rawAmount / 10 ** token.decimals).toPrecision(4)).toLocaleString(undefined, { maximumSignificantDigits: 4 })
       : undefined
 
   return {
-    enabled,
     controller,
     txReceipt,
+    mintable,
     mintAmountReadable,
   }
 }

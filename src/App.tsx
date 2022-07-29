@@ -55,7 +55,7 @@ const TokenRow = memo(function TokenRow({ token }: { token: TokenData }) {
               onClick={() => mint.controller.write()}
               disabled={isMintLoading}
               style={{
-                visibility: mint.enabled ? undefined : 'hidden',
+                visibility: mint.mintable ? undefined : 'hidden',
                 pointerEvents: isConnected ? undefined : 'none',
                 opacity: isConnected ? undefined : 0.25,
               }}

@@ -137,21 +137,26 @@ export default function App() {
   )
 
   return (
-    <Column stretch gap="32px" style={{ maxWidth: 1000 }} className="mx-auto my-16 px-8">
-      <div className="self-end">
-        <ConnectButton showBalance={false} accountStatus="address" />
-      </div>
+    <Column stretch gap="32px" style={{ maxWidth: 950 }} className="mx-auto my-8 px-4">
+      <Column stretch gap="16px">
+        <div className="self-end">
+          <ConnectButton showBalance={false} accountStatus="address" />
+        </div>
 
-      <h1 className="text-3xl font-bold">Faucet</h1>
+        <h1 className="text-3xl font-bold">Faucet</h1>
+      </Column>
 
       <Column stretch gap="12px">
-        <input
-          type="url"
-          className="border rounded-xl h-12 px-4"
-          defaultValue={tokenListUrl}
-          onChange={handleTokenListUrlChange}
-          placeholder="Enter a token list's URL"
-        />
+        <Column stretch gap="4px" as="label">
+          <div className="text-sm font-medium">Token list URL</div>
+          <input
+            type="url"
+            className="border rounded-xl h-12 px-4"
+            defaultValue={tokenListUrl}
+            onChange={handleTokenListUrlChange}
+            placeholder="Enter a token list's URL"
+          />
+        </Column>
 
         {listData && (
           <Row gap="1em">

@@ -66,8 +66,6 @@ export default function App() {
 
   const { address } = useAccount()
 
-  console.log(mintAll.enabled, mintAll)
-
   return (
     <Column stretch gap="24px" style={{ maxWidth: 1000 }} className="mx-auto my-16 px-8">
       <div className="self-end">

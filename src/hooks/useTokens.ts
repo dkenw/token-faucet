@@ -30,7 +30,6 @@ export const useTokens = (
 
     fetchJson(tokenListUrl)
       .then((data) => {
-        console.log('data', data)
         if (ref.current === tokenListUrl) setData(data)
       })
       .catch((error) => {

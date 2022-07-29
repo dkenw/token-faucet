@@ -10,7 +10,6 @@ import { TokenData } from './hooks/tokens'
 import { useChainId } from './hooks/useChainId'
 import { useInputField } from './hooks/useInputField'
 import { useMint, useMintAll } from './hooks/useMint'
-
 import { useTokens } from './hooks/useTokens'
 
 const DEFAULT_TOKEN_LIST_URL = 'https://raw.githubusercontent.com/dkenw/token-list/master/tokenlist.json'
@@ -18,6 +17,20 @@ const DEFAULT_TOKEN_LIST_URL = 'https://raw.githubusercontent.com/dkenw/token-li
 const chainsById: Record<number, Chain> = allChains.reduce((acc, chain) => ({ ...acc, [chain.id]: chain }), {})
 
 const OVERRIDE_MINT_AMOUNT = undefined
+
+const uriToHttp = (uri: string): string => {
+  const protocol = uri.split(':')[0].toLowerCase()
+  switch (protocol) {
+    case 'ipfs':
+      const hash = uri.match(/^ipfs:(\/\/)?(.*)$/i)?.[2]
+      return `https://cloudflare-ipfs.com/ipfs/${hash}/`
+    case 'ipns':
+      const name = uri.match(/^ipns:(\/\/)?(.*)$/i)?.[2]
+      return `https://cloudflare-ipfs.com/ipns/${name}/`
+    default:
+      return uri
+  }
+}
 
 const TokenRow = memo(function TokenRow({ token }: { token: TokenData }) {
   const { isConnected } = useAccount()
@@ -28,7 +41,7 @@ const TokenRow = memo(function TokenRow({ token }: { token: TokenData }) {
   return (
     <tr>
       <td>
-        <img src={token.logoURI} className="w-8 h-8" alt={token.symbol} />
+        <img src={uriToHttp(token.logoURI)} className="w-8 h-8" alt={token.symbol} />
       </td>
       <td>{token.symbol}</td>
       <td>{token.name}</td>
@@ -161,7 +174,7 @@ export default function App() {
         {listData && (
           <Row gap="1em">
             <img
-              src={listData?.logoURI ?? ''}
+              src={uriToHttp(listData?.logoURI ?? '')}
               className="w-14 h-14"
               alt={listData.name}
               style={{ border: '1px solid #eee', borderRadius: 6 }}
@@ -176,7 +189,7 @@ export default function App() {
 
       <Column stretch gap="12px">
         <Tab.Group>
-          <Tab.List className="flex gap-8 font-bold text-xl">
+          <Tab.List className="flex gap-x-8 gap-y-2 font-bold text-xl flex-wrap">
             {chainIds?.map((chainId) => (
               <Tab
                 key={chainId}

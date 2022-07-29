@@ -29,9 +29,9 @@ export const isMintable = (token: TokenData | undefined): token is MintableToken
   return typeof amount === 'string' && /^[0-9]+$/.test(amount)
 }
 
-export const getMintAmount = (token: MintableTokenData, overrideMintAmount: number | undefined) => {
-  return overrideMintAmount
-    ? BigNumber.from(10).pow(token.decimals).mul(overrideMintAmount)
+export const getMintAmount = (token: MintableTokenData, overrideMintAmountFloat: number | undefined) => {
+  return overrideMintAmountFloat
+    ? BigNumber.from(10).pow(token.decimals).mul(overrideMintAmountFloat)
     : BigNumber.from(token.extensions?.mintable?.default as string)
 }
 

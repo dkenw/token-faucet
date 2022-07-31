@@ -7,7 +7,7 @@ interface BasicTokenData {
   symbol: string
   name: string
   decimals: number
-  logoURI: string
+  logoURI?: string
   extensions?: Record<string, any>
 }
 

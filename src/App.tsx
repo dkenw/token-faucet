@@ -9,6 +9,7 @@ import { LoadingSpinner } from './components/LoadingSpinner'
 import { TokenData } from './hooks/tokens'
 import { useChainId } from './hooks/useChainId'
 import { useInputField } from './hooks/useInputField'
+import { useQueryStringParams } from './hooks/useLocationSearch'
 import { useMint, useMintAll } from './hooks/useMint'
 import { useTokens } from './hooks/useTokens'
 
@@ -40,9 +41,7 @@ const TokenRow = memo(function TokenRow({ token }: { token: TokenData }) {
 
   return (
     <tr>
-      <td>
-        <img src={uriToHttp(token.logoURI)} className="w-8 h-8" alt={token.symbol} />
-      </td>
+      <td>{token.logoURI && <img src={uriToHttp(token.logoURI)} className="w-8 h-8" alt={token.symbol} />}</td>
       <td>{token.symbol}</td>
       <td>{token.name}</td>
       <td>{chainsById[token.chainId]?.name ?? token.chainId}</td>
@@ -136,7 +135,10 @@ const TokenList = memo(function TokenList({
 export default function App() {
   const currentChainId = useChainId()
 
-  const [tokenListUrl, handleTokenListUrlChange] = useInputField(DEFAULT_TOKEN_LIST_URL, 500)
+  const params = useQueryStringParams()
+  const defaultTokenListUrl = params.get('url') ?? DEFAULT_TOKEN_LIST_URL
+  const [tokenListUrl, handleTokenListUrlChange] = useInputField(defaultTokenListUrl, 500)
+
   const { tokens: allTokens, tokensByChainId, data: listData } = useTokens(tokenListUrl)
 
   const chainIds = useMemo(

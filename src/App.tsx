@@ -8,12 +8,9 @@ import { Column, Row } from './components/layout'
 import { LoadingSpinner } from './components/LoadingSpinner'
 import { TokenData } from './hooks/tokens'
 import { useChainId } from './hooks/useChainId'
-import { useInputField } from './hooks/useInputField'
-import { useQueryStringParams } from './hooks/useLocationSearch'
 import { useMint, useMintAll } from './hooks/useMint'
+import { useTokenListUrlFromQueryString } from './hooks/useTokenListUrlFromQueryString'
 import { useTokens } from './hooks/useTokens'
-
-const DEFAULT_TOKEN_LIST_URL = 'https://raw.githubusercontent.com/dkenw/token-list/master/tokenlist.json'
 
 const chainsById: Record<number, Chain> = allChains.reduce((acc, chain) => ({ ...acc, [chain.id]: chain }), {})
 
@@ -44,10 +41,16 @@ const TokenRow = memo(function TokenRow({ token }: { token: TokenData }) {
       <td>{token.logoURI && <img src={uriToHttp(token.logoURI)} className="w-8 h-8" alt={token.symbol} />}</td>
       <td>{token.symbol}</td>
       <td>{token.name}</td>
-      <td>{chainsById[token.chainId]?.name ?? token.chainId}</td>
-      <td className="text-xs">{token.address}</td>
+      {/* <td>{chainsById[token.chainId]?.name ?? token.chainId}</td> */}
+      <td className="text-xs">
+        <Row>
+          {token.address}&nbsp;
+          <CopyIcon size="1em" text={token.address} />
+        </Row>
+      </td>
       <td>
-        <Row gap="0.8em">
+        <Row gap="0.8em" justifyEnd>
+          {mint.txReceipt.isSuccess ? <div className="font-semibold w-1">✓</div> : null}
           <span className={classNames(isConnected ? undefined : 'cursor-not-allowed')}>
             <button
               className="rounded-md h-7 min-w-max w-24 bg-neutral-700 px-2 hover:bg-neutral-800 disabled:opacity-90 text-white text-xs font-semibold"
@@ -64,7 +67,6 @@ const TokenRow = memo(function TokenRow({ token }: { token: TokenData }) {
               </Row>
             </button>
           </span>
-          <div className="font-semibold w-1">{mint.txReceipt.isSuccess ? '✓' : null}</div>
         </Row>
       </td>
     </tr>
@@ -87,13 +89,13 @@ const TokenList = memo(function TokenList({
   if (!tokens) return null
 
   return (
-    <table className="table-auto text-sm w-full">
+    <table className="table-auto w-full text-sm">
       <thead>
         <tr>
           <th>Logo</th>
           <th>Symbol</th>
           <th>Name</th>
-          <th>Network</th>
+          {/* <th>Network</th> */}
           <th>Address</th>
           <th>
             {mintAll.mintableCount === 0 ? (
@@ -104,7 +106,8 @@ const TokenList = memo(function TokenList({
                 <>No mintable tokens</>
               </button>
             ) : (
-              <Row gap="0.8em">
+              <Row gap="0.8em" justifyEnd>
+                {mintAll.txReceipt.isSuccess ? <div className="font-semibold w-1">✓</div> : null}
                 <span className={classNames(isConnected ? undefined : 'cursor-not-allowed')}>
                   <button
                     className="rounded-md h-7 min-w-max w-24 px-2 bg-neutral-700 hover:bg-neutral-800 disabled:opacity-90 text-white text-xs font-semibold"
@@ -117,7 +120,6 @@ const TokenList = memo(function TokenList({
                     </Row>
                   </button>
                 </span>
-                <div className="font-semibold w-1">{mintAll.txReceipt.isSuccess ? '✓' : null}</div>
               </Row>
             )}
           </th>
@@ -133,14 +135,10 @@ const TokenList = memo(function TokenList({
 })
 
 export default function App() {
-  const currentChainId = useChainId()
-
-  const params = useQueryStringParams()
-  const defaultTokenListUrl = params.get('url') ?? DEFAULT_TOKEN_LIST_URL
-  const [tokenListUrl, handleTokenListUrlChange] = useInputField(defaultTokenListUrl, 500)
-
+  const tokenListUrl = useTokenListUrlFromQueryString() ?? ''
   const { tokens: allTokens, tokensByChainId, data: listData } = useTokens(tokenListUrl)
 
+  const currentChainId = useChainId()
   const chainIds = useMemo(
     () =>
       tokensByChainId
@@ -152,17 +150,16 @@ export default function App() {
   )
 
   return (
-    <Column stretch gap="32px" style={{ maxWidth: 950 }} className="mx-auto my-8 px-4">
-      <Column stretch gap="16px">
+    <Column stretch gap="32px" style={{ maxWidth: 850 }} className="mx-auto my-8 px-4">
+      <Column stretch gap="8px">
         <div className="self-end">
           <ConnectButton showBalance={false} accountStatus="address" />
         </div>
-
-        <h1 className="text-3xl font-bold">Faucet</h1>
+        <h1 className="text-3xl font-bold">Token Faucet</h1>
       </Column>
 
       <Column stretch gap="12px">
-        <Column stretch gap="4px" as="label">
+        {/* <Column stretch gap="4px" as="label">
           <div className="text-sm font-medium">Token list URL</div>
           <input
             type="url"
@@ -171,23 +168,43 @@ export default function App() {
             onChange={handleTokenListUrlChange}
             placeholder="Enter a token list's URL"
           />
-        </Column>
-
+        </Column> */}
         {listData && (
           <Row gap="1em">
             <img
               src={uriToHttp(listData?.logoURI ?? '')}
-              className="w-14 h-14"
+              className="w-16 h-16"
               alt={listData.name}
               style={{ border: '1px solid #eee', borderRadius: 6 }}
             />
-            <Column gap="">
+            <Column gap="2px">
               <h2 className="font-bold">{listData.name}</h2>
               <div className="text-sm">{allTokens?.length ?? 0} tokens</div>
+              <Row className="text-sm break-all">
+                {tokenListUrl}&nbsp;
+                <CopyIcon size="1em" text={tokenListUrl} />
+              </Row>
             </Column>
           </Row>
         )}
       </Column>
+
+      {listData && (
+        <Row gap="0.5em" className="rounded-xl bg-neutral-50 border-neutral-200 border px-4 py-4">
+          <span className="text-xl">💡</span>
+          <div>
+            If you need native ETH, please use{' '}
+            <a className="underline" href="https://faucet.paradigm.xyz/" target="_blank" rel="noreferrer">
+              Paradigm Faucet
+            </a>{' '}
+            or{' '}
+            <a className="underline" href="https://faucets.chain.link/" target="_blank" rel="noreferrer">
+              Chainlink Faucet
+            </a>
+            .
+          </div>
+        </Row>
+      )}
 
       <Column stretch gap="12px">
         <Tab.Group>
@@ -205,7 +222,7 @@ export default function App() {
           </Tab.List>
           <Tab.Panels>
             {chainIds?.map((chainId) => (
-              <Tab.Panel key={chainId}>
+              <Tab.Panel key={chainId} className="overflow-x-auto">
                 <TokenList allTokens={tokensByChainId?.[chainId]} chainId={chainId} />
               </Tab.Panel>
             ))}
@@ -215,3 +232,26 @@ export default function App() {
     </Column>
   )
 }
+
+const CopyIcon = ({ text, size }: { text: string; size: string }) => (
+  <span
+    role="button"
+    className="cursor hover:text-neutral-700 active:text-neutral-400"
+    style={{ lineHeight: 0 }}
+    onClick={() => navigator.clipboard.writeText(text)}
+  >
+    <svg
+      className="inline"
+      style={{ verticalAlign: 'text-bottom', width: size, height: size }}
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="2"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+      <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+    </svg>
+  </span>
+)

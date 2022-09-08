@@ -4,7 +4,10 @@ import { useAccount, useContractWrite, useWaitForTransaction } from 'wagmi'
 import { getMintAmount, isMintable, MINTABLE_TOKEN_ABI, MINTABLE_TOKEN_INTERFACE, TokenData } from './tokens'
 import { useChainId } from './useChainId'
 
-const MAKERDAO_MULTICALL2_ADDRESS = '0x8250eba230eD7fCB90414219faeE89ce85162231'
+const MAKERDAO_MULTICALL2_ADDRESSES: Record<string, string | undefined> = {
+  4: '0x8250eba230eD7fCB90414219faeE89ce85162231',
+  5: '0xD850ec01da8FD7CA955B123cfdCE92eF093C4383',
+}
 
 const MULTICALL2_ABI = [
   'function tryAggregate(bool requireSuccess, tuple(address target, bytes callData)[] calls) returns (tuple(bool success, bytes returnData)[] returnData)',
@@ -47,7 +50,7 @@ export const useMintAll = (
 
   const { controller, txReceipt } = useContractWriteAndGetTransaction({
     chainId,
-    addressOrName: isConnected ? MAKERDAO_MULTICALL2_ADDRESS : '',
+    addressOrName: isConnected && chainId ? MAKERDAO_MULTICALL2_ADDRESSES[chainId] ?? '' : '',
     contractInterface: MULTICALL2_ABI,
     functionName: 'tryAggregate',
     args: [false, calls ?? []],
